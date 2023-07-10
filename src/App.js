@@ -152,6 +152,12 @@ function App() {
 
   }
 
+  const showClassDetails = event => {
+    const val = event.currentTarget.id;
+    const classReq = CLASS_LIST[val];
+    document.getElementById("details").innerText = JSON.stringify(classReq);
+  }
+
   return (
     <div className="App">
       <header className="App-header">
@@ -177,6 +183,25 @@ function App() {
               <button id={key} onClick={downgradeAttribute}>-</button>
               </List.Item>}
         />
+
+        </div>
+
+        <div className='Classes'>
+
+          <List
+              size="small"
+              header={<h2>Classes</h2>}
+              bordered
+              dataSource={classList}
+              renderItem={(key) =>  <List.Item>
+                <button id={key} onClick={showClassDetails} style={{ background: classes[key] ? 'green' : 'white' }}>{key}</button>
+                </List.Item>}
+          />
+
+          <p id="details"></p>
+
+          
+
 
         </div>
 
