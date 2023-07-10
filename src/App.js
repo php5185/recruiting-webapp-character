@@ -2,12 +2,14 @@ import { useState, useEffect } from 'react';
 import './App.css';
 import { ATTRIBUTE_LIST, CLASS_LIST, SKILL_LIST } from './consts.js';
 import { List } from 'antd'
+import axios from 'axios';
 
 const CONST_INTELLIGENCE = 'Intelligence';
+const URL = 'https://recruiting.verylongdomaintotestwith.ca/api/{php5185}/character';
 
 
 function App() {
-  //const [num, setNum] = useState(0);
+  
   const [attribute, setAttribute] = useState({});
   const [attributeCount, setAttributeCount] = useState(0);
 
@@ -20,54 +22,55 @@ function App() {
 
   const initCharacter = async () => {
 
-    //   const { data } = await axios.get(
-    //     `http://localhost:3001/random-quiz`
-    // );
+      const { data } = await axios.get(URL);
+      if(data.statusCode == 200 && data.body !== undefined){
+        setAttribute(data.body.attribute);
+        setAttributeCount(data.body.attributeCount);
+        setModifier(data.body.modifier);
+        setPoints(data.body.points);
+        setSkillPoints(data.body.skillPoints);
+        setClasses(data.body.classes);
+        setClassList(data.body.classList);
+      }
+      else{
+        let startAttributes = {}
+        let startModifiers = {}
 
-    // if data {
+        let startAttributeCount = 0;
 
-    // }
-    // else{
+        ATTRIBUTE_LIST.forEach(element => {
+          startAttributes[element] = 10;
+          startModifiers[element] = 0;
+          startAttributeCount += 10;
+        });
+        setAttribute(startAttributes);
+        setModifier(startModifiers);
 
-    // }
+        let startPoints = 10 + (4 * modifier[CONST_INTELLIGENCE]);
+        setPoints(startPoints);
 
-    let startAttributes = {}
-    let startModifiers = {}
+        let startSkills = {};
 
-    let startAttributeCount = 0;
+        SKILL_LIST.forEach(element => {
+          startSkills[element.name] = 0;
+        });
 
-    ATTRIBUTE_LIST.forEach(element => {
-      startAttributes[element] = 10;
-      startModifiers[element] = 0;
-      startAttributeCount += 10;
-    });
-    setAttribute(startAttributes);
-    setModifier(startModifiers);
+        setSkillPoints(startSkills);
 
-    let startPoints = 10 + (4 * modifier[CONST_INTELLIGENCE]);
-    setPoints(startPoints);
+        let startClases = {}
+        let allClasses = [];
 
-    let startSkills = {};
+        for (const key in CLASS_LIST) {
+          startClases[key] = false;
+          allClasses.push(key);
+        }
 
-    SKILL_LIST.forEach(element => {
-      startSkills[element.name] = 0;
-    });
+        setClasses(startClases);
+        setClassList(allClasses);
+        setAttributeCount(startAttributeCount);
+        setPointsCount(0);
 
-    setSkillPoints(startSkills);
-
-    let startClases = {}
-    let allClasses = [];
-
-    for (const key in CLASS_LIST) {
-      startClases[key] = false;
-      allClasses.push(key);
-    }
-
-    setClasses(startClases);
-    setClassList(allClasses);
-    setAttributeCount(startAttributeCount);
-    setPointsCount(0);
-
+      }
   }
 
   useEffect(() => {
@@ -87,6 +90,18 @@ function App() {
     updateModifierForAttribute();
   
   }, [attribute])
+
+
+  useEffect(() => {
+    updateSkillPoints();
+  }, [modifier[CONST_INTELLIGENCE]]);
+  
+  
+  const updateSkillPoints = () => {
+    
+    let newPoints = 10 + (4 * modifier[CONST_INTELLIGENCE]);
+    setPoints(newPoints);
+  }
 
   const updateModifierForAttribute = () => {
 
@@ -158,18 +173,64 @@ function App() {
     document.getElementById("details").innerText = JSON.stringify(classReq);
   }
 
+  const upgradeSkill = event => {
+    //increase up to points
+    if (pointsCount>=points) {
+      alert(`You have use all your available points`);
+      return;
+    }
+  
+    const val = event.currentTarget.id;
+    setSkillPoints((prevSkills) => ({
+      ...prevSkills,
+      [val]: prevSkills[val] +1
+    }))
+    setPointsCount(prevCount => prevCount +1);
+  }
+
+  const downgradeSkill = event => {
+    const val = event.currentTarget.id;
+    if(skillPoints[val]<=0){
+      alert(`Skill level at minimun`);
+      return;
+    }
+    
+    setSkillPoints((prevSkills) => ({
+      ...prevSkills,
+      [val]: prevSkills[val] -1
+    }))
+    setPointsCount(prevCount => prevCount -1);
+  }
+
+
+  const saveCharacter = event => {
+    let data = JSON.stringify({
+      attribute: attribute,
+      attributeCount: attributeCount,
+      modifier: modifier,
+      points: points,
+      skillPoints: skillPoints,
+      classes: classes,
+      classList: classList
+    })
+   
+
+    axios.post(URL, data, {
+      headers: {
+          'Content-Type': 'application/json',
+      }
+  })
+    .then((response) => {
+      console.log(response);
+    });
+  }
+
   return (
     <div className="App">
       <header className="App-header">
         <h1>React Coding Exercise -- Paola Peralta</h1>
       </header>
       <section className="App-section">
-        {/* <div>
-          Value:
-          {num}
-          <button>+</button>
-          <button>-</button>
-        </div> */}
 
         <div className='Attributes'>
         <List
@@ -196,13 +257,34 @@ function App() {
               renderItem={(key) =>  <List.Item>
                 <button id={key} onClick={showClassDetails} style={{ background: classes[key] ? 'green' : 'white' }}>{key}</button>
                 </List.Item>}
-          />
+            />
 
           <p id="details"></p>
 
+        </div>
+
+
+
+        <div className='Skills'>
+          <h3> Total skill points available: {points}</h3>
+          <List
+            size="small"
+            header={<h2>Skills</h2>}
+            bordered
+            dataSource={SKILL_LIST}
+            renderItem={(key) =>  <List.Item>
+              {key.name}: {skillPoints[key.name]} (modifier: {key.attributeModifier}): {modifier[key.attributeModifier]} 
+              <button id={key.name} onClick={upgradeSkill}>+</button>
+              <button id={key.name} onClick={downgradeSkill}>-</button>
+               Total: {skillPoints[key.name] + modifier[key.attributeModifier]}
+              </List.Item>}
+          />
           
+        </div>
 
 
+        <div className='Save'>
+         <button onClick={saveCharacter}>Save Character</button>
         </div>
 
 
