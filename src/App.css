@@ -17,7 +17,7 @@
 }
 
 .App-header {
-  background-color: #282c34;
+  background-color: gray;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -28,7 +28,7 @@
 
 .App-section {
   flex: 1 1 0;
-  background-color: hsl(220deg 13% 13%);
+  background-color: gray;
   color: white;
 }
 
