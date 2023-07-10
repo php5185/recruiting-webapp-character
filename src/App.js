@@ -75,6 +75,55 @@ function App() {
   }, []);
 
 
+  useEffect(()=>{
+    classList.forEach( key =>{
+      let classVal = updateClasses(key);
+      setClasses((prevStatus) => ({
+        ...prevStatus,
+       [key]: classVal
+      }))
+    })
+  
+    updateModifierForAttribute();
+  
+  }, [attribute])
+
+  const updateModifierForAttribute = () => {
+
+    ATTRIBUTE_LIST.forEach( val =>{
+      let newModifierValue = 0;
+  
+      if (attribute[val] <= 7){
+        newModifierValue = -2;
+      }else if (attribute[val] >=8 && attribute[val] <=9 ){
+        newModifierValue = -1;
+      }else if(attribute[val] >=12 && attribute[val] <14){
+        newModifierValue = 1;
+      }else if (attribute[val] >=14 && attribute[val] <20){
+        newModifierValue = 2;
+      }else if (attribute[val] >=20){
+        newModifierValue = 5;
+      }
+  
+      setModifier((prevModifier) => ({
+        ...prevModifier,
+        [val]: newModifierValue
+      }))
+    })
+  
+  }
+
+  const updateClasses = (classKey) => {
+    const classReq = CLASS_LIST[classKey];
+    for (const field in classReq){
+     
+      if (attribute[field] < classReq[field]){
+        return false;
+      }
+    }
+    return true;
+  }
+
   const upgradeAttribute = event => {
     //check points
     if (attributeCount === 70) {
